@@ -9,12 +9,12 @@ use std::io::Write;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Request {
     pub account: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Response {
     Code { account: String, code: String },
@@ -96,4 +96,36 @@ fn serialize_response(response: &Response) -> Result<Vec<u8>, Error> {
     let raw_output_length = u32::to_ne_bytes(output_length);
 
     Ok([&raw_output_length, raw_output].concat())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::assert_matches::assert_matches;
+    use test_case::test_case;
+
+    #[test_case(b"{\"account\":\"rust-lang.org\"}", Request {account: String::from("rust-lang.org")}; "works with proper json")]
+    #[test_case(b"{\"account\":\"rust-lang.org\",\"extra\":\"extra_field\"}", Request {account: String::from("rust-lang.org")}; "ignores additional fields")]
+    fn deserialize_request_succeeds(bytes: &[u8], request: Request) {
+        let deserialized = deserialize_request(bytes).unwrap();
+        assert_eq!(
+            request, deserialized,
+            "asserting equality of deserialized and expected request"
+        )
+    }
+
+    #[test_case(b"{\"account\":\"rust-lang.org}"; "fails on illegal syntax")]
+    #[test_case(b"{\"account\":22}"; "fails on integer type")]
+    #[test_case(b"{\"no_account\":22}"; "fails on wrong key")]
+    #[test_case(b"{}"; "fails on empty json")]
+    #[test_case(b""; "fails on empty string")]
+    #[test_case(b"{\"account\":\"rust-lang.org\"}231412"; "fails on trailing chars")]
+    #[test_case(b"2134{\"account\":\"rust-lang.org\"}"; "fails on leading chars")]
+    fn deserialize_request_fails_on_illegal_json(bytes: &[u8]) {
+        assert_matches!(
+            deserialize_request(bytes),
+            Err(Error::Read),
+            "asserting request deserialization results in error"
+        )
+    }
 }
