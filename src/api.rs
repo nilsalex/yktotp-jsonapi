@@ -72,9 +72,7 @@ fn read_input(buffer: &mut impl Read) -> Result<Vec<u8>, Error> {
         usize::try_from(u32::from_ne_bytes(raw_input_length)).map_err(|_| Error::Read)?;
 
     let mut raw_input = vec![0; input_length];
-    io::stdin()
-        .read_exact(&mut raw_input)
-        .map_err(|_| Error::Read)?;
+    buffer.read_exact(&mut raw_input).map_err(|_| Error::Read)?;
 
     Ok(raw_input)
 }
@@ -126,6 +124,45 @@ mod tests {
             deserialize_request(bytes),
             Err(Error::Read),
             "asserting request deserialization results in error"
+        )
+    }
+
+    #[test_case(&Response::Code{account: String::from("rust-lang.org"), code: String::from("123456")}, b"\x2B\x00\x00\x00{\"account\":\"rust-lang.org\",\"code\":\"123456\"}"; "succeeds for response with code")]
+    #[test_case(&Response::Error{account: String::from("rust-lang.org"), error: String::from("some error")}, b"\x30\x00\x00\x00{\"account\":\"rust-lang.org\",\"error\":\"some error\"}"; "succeeds for response with error")]
+    fn serialize_response_succeeds(response: &Response, bytes: &[u8]) {
+        let serialized = serialize_response(response).unwrap();
+        assert_eq!(
+            bytes, serialized,
+            "assert serialized response equals expected bytes"
+        )
+    }
+
+    #[test_case(
+        b"\x1B\x00\x00\x00{\"account\":\"rust-lang.org\"}",
+        b"{\"account\":\"rust-lang.org\"}" ;
+        "succeeds for correct input length"
+    )]
+    #[test_case(
+        b"\x1B\x00\x00\x00{\"account\":\"rust-lang.org\"}herearesomemorebytes",
+        b"{\"account\":\"rust-lang.org\"}" ;
+        "succeeds for additional bytes after input"
+    )]
+    fn read_input_succeeds(input_bytes: &[u8], output_bytes: &[u8]) {
+        let buffer = input_bytes.to_vec();
+        let read_bytes = read_input(&mut buffer.as_slice()).unwrap();
+        assert_eq!(
+            output_bytes, read_bytes,
+            "assert read bytes equal expected bytes"
+        )
+    }
+
+    #[test_case(b"\x1B\x00\x00\x00{\"account\":\"rust.org\"}" ; "fails for too short input")]
+    fn read_input_fails(input_bytes: &[u8]) {
+        let buffer = input_bytes.to_vec();
+        assert_matches!(
+            read_input(&mut buffer.as_slice()),
+            Err(Error::Read),
+            "assert reading input fails"
         )
     }
 }
