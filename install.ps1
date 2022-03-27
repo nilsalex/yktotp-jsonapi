@@ -1,6 +1,12 @@
 cargo build --release
 
-Copy-Item ".\manifest\regedit.reg.tmpl" -Destination ".\manifest\regedit.reg"
-$content = (Get-Content ".\manifest\regedit.reg" -Raw)
-$location = (Get-Location).ToString().Replace('\', '\\')
-$content.Replace('<GIT_ROOT>', $location) | Set-Content -Path ".\manifest\regedit.reg"
+$RegistryPath = 'HKCU:\Software\Google\Chrome\NativeMessagingHosts\de.nilsalex.yktotp'
+$Name = '(Default)'
+$location = Get-Location
+$Value = "$location\manifest\de.nilsalex.yktotp-windows.json"
+
+If (-NOT(Test-Path $RegistryPath))
+{
+    New-Item -Path $RegistryPath -Force | Out-Null
+}
+New-ItemProperty -Path $RegistryPath -Name $Name -Value $Value -PropertyType String -Force
