@@ -1,0 +1,9 @@
+{
+    "name": "de.nilsalex.yktotp",
+    "description": "Retrieve a TOTP from a YubiKey",
+    "path": "..\\target\\release\\yktotp-jsonapi.exe",
+    "type": "stdio",
+    "allowed_origins": [
+        "chrome-extension://ihbedomjncdjfolkgkckgfdkbjbemmjl/"
+    ]
+}
