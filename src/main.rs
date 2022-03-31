@@ -1,5 +1,3 @@
-#![feature(assert_matches)]
-
 mod api;
 mod oath;
 mod time;

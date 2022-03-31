@@ -99,7 +99,6 @@ fn serialize_response(response: &Response) -> Result<Vec<u8>, Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::assert_matches::assert_matches;
     use test_case::test_case;
 
     #[test_case(b"{\"account\":\"rust-lang.org\"}", Request {account: String::from("rust-lang.org")}; "works with proper json")]
@@ -120,9 +119,8 @@ mod tests {
     #[test_case(b"{\"account\":\"rust-lang.org\"}231412"; "fails on trailing chars")]
     #[test_case(b"2134{\"account\":\"rust-lang.org\"}"; "fails on leading chars")]
     fn deserialize_request_fails_on_illegal_json(bytes: &[u8]) {
-        assert_matches!(
-            deserialize_request(bytes),
-            Err(Error::Read),
+        assert!(
+            matches!(deserialize_request(bytes), Err(Error::Read)),
             "asserting request deserialization results in error"
         )
     }
@@ -159,9 +157,8 @@ mod tests {
     #[test_case(b"\x1B\x00\x00\x00{\"account\":\"rust.org\"}" ; "fails for too short input")]
     fn read_input_fails(input_bytes: &[u8]) {
         let buffer = input_bytes.to_vec();
-        assert_matches!(
-            read_input(&mut buffer.as_slice()),
-            Err(Error::Read),
+        assert!(
+            matches!(read_input(&mut buffer.as_slice()), Err(Error::Read)),
             "assert reading input fails"
         )
     }
