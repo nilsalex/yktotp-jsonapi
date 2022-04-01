@@ -22,6 +22,8 @@ jobs:
       run: rustup update stable && rustup default stable
     - name: Build
       run: cargo build --verbose
+    - name: Run clippy
+      run: cargo clippy --verbose
     - name: Run tests
       run: cargo test --verbose
 
@@ -35,5 +37,7 @@ jobs:
         run: rustup update stable; rustup default stable
       - name: Build
         run: cargo build --verbose
+      - name: Run clippy
+        run: cargo clippy --verbose
       - name: Run tests
         run: cargo test --verbose
