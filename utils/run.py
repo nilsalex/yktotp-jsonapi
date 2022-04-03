@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import platform
 import subprocess
 import sys
 
@@ -19,7 +20,8 @@ encoded_message = length_raw + message_raw
 print(f"message: {message}")
 print(f"encoded message: {encoded_message}")
 
-exe_path = os.path.join(os.path.dirname(sys.argv[0]), "../target/release/yktotp-jsonapi")
+exe_name = "yktotp-jsonapi.exe" if platform.system() == "Windows" else "yktotp-jsonapi"
+exe_path = os.path.join(os.path.dirname(sys.argv[0]), "../target/release/", exe_name)
 process = subprocess.run(os.path.abspath(exe_path),
                          text=True,
                          input=encoded_message.decode(),
