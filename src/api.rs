@@ -20,7 +20,7 @@ pub enum Request {
 pub enum Response {
     Code { account: String, code: String },
     AccountList { accounts: Vec<String> },
-    Error { account: String, error: String },
+    Error { error: String },
 }
 
 #[derive(Debug)]
@@ -48,7 +48,6 @@ fn read_accounts_list() -> Response {
             accounts: account_vec,
         },
         Err(e) => Response::Error {
-            account: "".to_owned(),
             error: format!("{:?}", e),
         },
     }
@@ -66,7 +65,6 @@ fn read_otp(search_term: &str) -> Response {
             code: format!("{:06}", code),
         },
         Err(e) => Response::Error {
-            account: search_term.to_owned(),
             error: format!("{:?}", e),
         },
     }
@@ -149,8 +147,8 @@ mod tests {
     }
 
     #[test_case(& Response::Code{account: String::from("rust-lang.org"), code: String::from("123456")}, b"\x2B\x00\x00\x00{\"account\":\"rust-lang.org\",\"code\":\"123456\"}"; "succeeds for response with code")]
-    #[test_case(& Response::AccountList{accounts: vec![String::from("rust-lang.org"), String::from("zombo.com")]}, b"\x2A\x00\x00\x00{\"accounts\":[\"rust-lang.org\",\"zombo.com\"]}"; "succeeds for response with account list")]
-    #[test_case(& Response::Error{account: String::from("rust-lang.org"), error: String::from("some error")}, b"\x30\x00\x00\x00{\"account\":\"rust-lang.org\",\"error\":\"some error\"}"; "succeeds for response with error")]
+    #[test_case(& Response::AccountList{accounts: vec ! [String::from("rust-lang.org"), String::from("zombo.com")]}, b"\x2A\x00\x00\x00{\"accounts\":[\"rust-lang.org\",\"zombo.com\"]}"; "succeeds for response with account list")]
+    #[test_case(& Response::Error{error: String::from("some error")}, b"\x16\x00\x00\x00{\"error\":\"some error\"}"; "succeeds for response with error")]
     fn serialize_response_succeeds(response: &Response, bytes: &[u8]) {
         let serialized = serialize_response(response).unwrap();
         assert_eq!(
