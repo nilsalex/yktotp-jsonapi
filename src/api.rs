@@ -1,12 +1,12 @@
-use crate::oath;
-use crate::time;
-use crate::yubikey;
-
 use std::io;
 use std::io::Read;
 use std::io::Write;
 
 use serde::{Deserialize, Serialize};
+
+use crate::oath;
+use crate::time;
+use crate::yubikey;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "type")]
@@ -73,9 +73,7 @@ fn read_otp(search_term: &str) -> Response {
 }
 
 pub fn serve() -> Result<(), Error> {
-    read()
-        .and_then(|r| handle_request(&r))
-        .and_then(|r| write(&r))
+    read().map(|r| handle_request(&r)).and_then(|r| write(&r))
 }
 
 fn read() -> Result<Request, Error> {
@@ -121,8 +119,9 @@ fn serialize_response(response: &Response) -> Result<Vec<u8>, Error> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use test_case::test_case;
+
+    use super::*;
 
     #[test_case(b"{\"type\":\"Code\",\"account\":\"rust-lang.org\"}", Request::Code { account: String::from("rust-lang.org")}; "works with proper json")]
     #[test_case(b"{\"type\":\"Code\",\"account\":\"rust-lang.org\",\"extra\":\"extra_field\"}", Request::Code { account: String::from("rust-lang.org")}; "ignores additional fields")]
@@ -148,8 +147,8 @@ mod tests {
         )
     }
 
-    #[test_case(&Response::Code{account: String::from("rust-lang.org"), code: String::from("123456")}, b"\x2B\x00\x00\x00{\"account\":\"rust-lang.org\",\"code\":\"123456\"}"; "succeeds for response with code")]
-    #[test_case(&Response::Error{account: String::from("rust-lang.org"), error: String::from("some error")}, b"\x30\x00\x00\x00{\"account\":\"rust-lang.org\",\"error\":\"some error\"}"; "succeeds for response with error")]
+    #[test_case(& Response::Code{account: String::from("rust-lang.org"), code: String::from("123456")}, b"\x2B\x00\x00\x00{\"account\":\"rust-lang.org\",\"code\":\"123456\"}"; "succeeds for response with code")]
+    #[test_case(& Response::Error{account: String::from("rust-lang.org"), error: String::from("some error")}, b"\x30\x00\x00\x00{\"account\":\"rust-lang.org\",\"error\":\"some error\"}"; "succeeds for response with error")]
     fn serialize_response_succeeds(response: &Response, bytes: &[u8]) {
         let serialized = serialize_response(response).unwrap();
         assert_eq!(
@@ -159,14 +158,14 @@ mod tests {
     }
 
     #[test_case(
-        b"\x1B\x00\x00\x00{\"account\":\"rust-lang.org\"}",
-        b"{\"account\":\"rust-lang.org\"}" ;
-        "succeeds for correct input length"
+    b"\x1B\x00\x00\x00{\"account\":\"rust-lang.org\"}",
+    b"{\"account\":\"rust-lang.org\"}";
+    "succeeds for correct input length"
     )]
     #[test_case(
-        b"\x1B\x00\x00\x00{\"account\":\"rust-lang.org\"}herearesomemorebytes",
-        b"{\"account\":\"rust-lang.org\"}" ;
-        "succeeds for additional bytes after input"
+    b"\x1B\x00\x00\x00{\"account\":\"rust-lang.org\"}herearesomemorebytes",
+    b"{\"account\":\"rust-lang.org\"}";
+    "succeeds for additional bytes after input"
     )]
     fn read_input_succeeds(input_bytes: &[u8], output_bytes: &[u8]) {
         let buffer = input_bytes.to_vec();
@@ -177,7 +176,7 @@ mod tests {
         )
     }
 
-    #[test_case(b"\x1B\x00\x00\x00{\"account\":\"rust.org\"}" ; "fails for too short input")]
+    #[test_case(b"\x1B\x00\x00\x00{\"account\":\"rust.org\"}"; "fails for too short input")]
     fn read_input_fails(input_bytes: &[u8]) {
         let buffer = input_bytes.to_vec();
         assert!(
