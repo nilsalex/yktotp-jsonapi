@@ -1,8 +1,6 @@
-use crate::api;
 use crate::oath;
 use crate::time;
 use crate::yubikey;
-use std::collections::LinkedList;
 
 use std::io;
 use std::io::Read;
@@ -11,16 +9,17 @@ use std::io::Write;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
-pub struct Request {
-    pub request: String,
-    pub account: String,
+#[serde(tag = "type")]
+pub enum Request {
+    AccountList,
+    Code { account: String},
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(untagged)]
 pub enum Response {
     Code { account: String, code: String },
-    AccountList { accounts: LinkedList<String> },
+    AccountList { accounts: Vec<String> },
     Error { account: String, error: String },
 }
 
@@ -33,14 +32,9 @@ pub enum Error {
 }
 
 pub fn handle_request(request: &Request) -> Result<Response, Error> {
-    let request_type = &request.request;
-    match request_type.as_str() {
-        "getOtp" => Ok(read_otp(&request)),
-        "getList" => Ok(read_accounts_list()),
-        _ => Ok(api::Response::Error {
-            account: "".to_owned(),
-            error: "Unknown request type".to_owned(),
-        }),
+    match request {
+        Request::Code {account} => Ok(read_otp(&account)),
+        Request::AccountList => Ok(read_accounts_list()),
     }
 }
 
@@ -50,29 +44,28 @@ fn read_accounts_list() -> Response {
         .and_then(|y| oath::list_credentials(&y).map_err(Error::Oath));
 
     match accounts {
-        Ok(response) => api::Response::AccountList {
-            accounts: LinkedList::from_iter(response),
+        Ok(account_vec) => Response::AccountList {
+            accounts: account_vec,
         },
-        Err(e) => api::Response::Error {
+        Err(e) => Response::Error {
             account: "".to_owned(),
             error: format!("{:?}", e),
         },
     }
 }
 
-fn read_otp(request: &&Request) -> Response {
-    let search_term = &request.account;
+fn read_otp(search_term: &str) -> Response {
     let timestamp = time::get_time();
     let code = yubikey::Yubikey::initialize()
         .map_err(Error::Yubikey)
         .and_then(|y| oath::calculate_fuzzy(&y, search_term, timestamp).map_err(Error::Oath));
 
     match code {
-        Ok(code) => api::Response::Code {
+        Ok(code) => Response::Code {
             account: search_term.to_owned(),
             code: format!("{:06}", code),
         },
-        Err(e) => api::Response::Error {
+        Err(e) => Response::Error {
             account: search_term.to_owned(),
             error: format!("{:?}", e),
         },
@@ -131,8 +124,8 @@ mod tests {
     use super::*;
     use test_case::test_case;
 
-    #[test_case(b"{\"request\":\"getOtp\",\"account\":\"rust-lang.org\"}", Request {request: String::from("getOtp"), account: String::from("rust-lang.org")}; "works with proper json")]
-    #[test_case(b"{\"request\":\"getOtp\",\"account\":\"rust-lang.org\",\"extra\":\"extra_field\"}", Request {request: String::from("getOtp"), account: String::from("rust-lang.org")}; "ignores additional fields")]
+    #[test_case(b"{\"type\":\"Code\",\"account\":\"rust-lang.org\"}", Request::Code { account: String::from("rust-lang.org")}; "works with proper json")]
+    #[test_case(b"{\"type\":\"Code\",\"account\":\"rust-lang.org\",\"extra\":\"extra_field\"}", Request::Code { account: String::from("rust-lang.org")}; "ignores additional fields")]
     fn deserialize_request_succeeds(bytes: &[u8], request: Request) {
         let deserialized = deserialize_request(bytes).unwrap();
         assert_eq!(

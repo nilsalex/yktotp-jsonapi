@@ -1,6 +1,6 @@
 # yktotp-jsonapi
 
-**❗This is still work in progress and only tested on a Linux operating system in conjunction with
+**❗This is still work in progress and only tested on Windows 10 and a Linux operating system in conjunction with
 Google Chrome Beta.❗**
 
 Get TOTP codes from a YubiKey. Intended to be called from the
@@ -8,6 +8,11 @@ Get TOTP codes from a YubiKey. Intended to be called from the
 
 ## Installation
 
+### Windows
+- Clone the repository and ensure you have `cargo` (Rust) available on your path
+- In a powershell with administrator rights, run `.\install.ps1`.
+
+### Linux
 - Run `cargo build --release`. This builds the executable `target/release/yktotp-jsonapi`.
 - Edit the [Native Messaging host manifest](manifest/de.nilsalex.yktotp.json) and update the `path` field
   to the path of the `yktotp-jsonapi` executable.
