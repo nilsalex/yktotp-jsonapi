@@ -125,6 +125,7 @@ mod tests {
 
     #[test_case(b"{\"type\":\"Code\",\"account\":\"rust-lang.org\"}", Request::Code { account: String::from("rust-lang.org")}; "works with proper json")]
     #[test_case(b"{\"type\":\"Code\",\"account\":\"rust-lang.org\",\"extra\":\"extra_field\"}", Request::Code { account: String::from("rust-lang.org")}; "ignores additional fields")]
+    #[test_case(b"{\"type\":\"AccountList\"}", Request::AccountList; "works with account list request")]
     fn deserialize_request_succeeds(bytes: &[u8], request: Request) {
         let deserialized = deserialize_request(bytes).unwrap();
         assert_eq!(
@@ -148,6 +149,7 @@ mod tests {
     }
 
     #[test_case(& Response::Code{account: String::from("rust-lang.org"), code: String::from("123456")}, b"\x2B\x00\x00\x00{\"account\":\"rust-lang.org\",\"code\":\"123456\"}"; "succeeds for response with code")]
+    #[test_case(& Response::AccountList{accounts: vec![String::from("rust-lang.org"), String::from("zombo.com")]}, b"\x2A\x00\x00\x00{\"accounts\":[\"rust-lang.org\",\"zombo.com\"]}"; "succeeds for response with account list")]
     #[test_case(& Response::Error{account: String::from("rust-lang.org"), error: String::from("some error")}, b"\x30\x00\x00\x00{\"account\":\"rust-lang.org\",\"error\":\"some error\"}"; "succeeds for response with error")]
     fn serialize_response_succeeds(response: &Response, bytes: &[u8]) {
         let serialized = serialize_response(response).unwrap();
