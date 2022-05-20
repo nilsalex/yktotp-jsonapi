@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 #[serde(tag = "type")]
 pub enum Request {
     AccountList,
-    Code { account: String},
+    Code { account: String },
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
@@ -31,10 +31,10 @@ pub enum Error {
     Oath(oath::Error),
 }
 
-pub fn handle_request(request: &Request) -> Result<Response, Error> {
+pub fn handle_request(request: &Request) -> Response {
     match request {
-        Request::Code {account} => Ok(read_otp(&account)),
-        Request::AccountList => Ok(read_accounts_list()),
+        Request::Code { account } => read_otp(&account),
+        Request::AccountList => read_accounts_list(),
     }
 }
 
