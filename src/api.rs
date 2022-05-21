@@ -33,7 +33,7 @@ pub enum Error {
 
 pub fn handle_request(request: &Request) -> Response {
     match request {
-        Request::Code { account } => read_otp(&account),
+        Request::Code { account } => read_otp(account),
         Request::AccountList => read_accounts_list(),
     }
 }
