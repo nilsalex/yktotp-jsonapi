@@ -1,5 +1,7 @@
 # yktotp-jsonapi
 
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/nilsalex/yktotp-jsonapi/badge)](https://securityscorecards.dev/viewer/?uri=github.com/nilsalex/yktotp-jsonapi)
+
 **❗This is still work in progress and only tested on Windows 10 and a Linux operating system in conjunction with
 Google Chrome Beta.❗**
 
