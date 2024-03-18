@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-pcsc = "2.7.0"
+pcsc = "2.8.2"
 pcsc-sys = "1.2.0"
-serde = { version = "1.0.136", features = ["derive"] }
-serde_json = "1.0.79"
+serde = { version = "1.0.197", features = ["derive"] }
+serde_json = "1.0.114"
 
 [dev-dependencies]
-test-case = "2.0.2"
+test-case = "3.3.1"
